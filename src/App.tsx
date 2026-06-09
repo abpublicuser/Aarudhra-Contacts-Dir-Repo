@@ -24,7 +24,7 @@ import { ContactCard } from './components/ContactCard';
 // Paste your Google Spreadsheet URL or copy its unique spreadsheet ID here directly!
 // By hardcoding this here, the application will load this spreadsheet immediately upon start.
 // ==========================================
-const HARDCODED_SPREADSHEET_ID = "1BxiMVs0XRA5nFMdKvBdBAna5PLy5MRvTRvKgsK97Zxs";
+const HARDCODED_SPREADSHEET_ID = "1dN6bkj48B126yAQ4mDZbchr27qOmC52dmH4TFRwUrPU";
 
 // CONFIGURATION: Set your Google Spreadsheet ID or complete URL here (via build environment)
 const SPREADSHEET_SOURCE_ENV = (import.meta as any).env?.VITE_CONTACTS_SPREADSHEET_ID || "";
