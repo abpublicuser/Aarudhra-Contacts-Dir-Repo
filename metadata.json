@@ -1,0 +1,6 @@
+{
+  "name": "Contacts Directory",
+  "description": "View and search contacts from your Google Sheets Contacts spreadsheet categorized by type of service.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
