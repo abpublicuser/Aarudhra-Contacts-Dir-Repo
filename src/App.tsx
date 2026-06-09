@@ -19,10 +19,20 @@ import { Contact, SpreadsheetFile } from './types';
 import { PhoneFrame } from './components/PhoneFrame';
 import { ContactCard } from './components/ContactCard';
 
+// ==========================================
+// ⚙️ HARDCODED SPREADSHEET CONFIGURATION:
+// Paste your Google Spreadsheet URL or copy its unique spreadsheet ID here directly!
+// By hardcoding this here, the application will load this spreadsheet immediately upon start.
+// ==========================================
+const HARDCODED_SPREADSHEET_ID = "1BxiMVs0XRA5nFMdKvBdBAna5PLy5MRvTRvKgsK97Zxs";
+
 // CONFIGURATION: Set your Google Spreadsheet ID or complete URL here (via build environment)
-const SPREADSHEET_SOURCE = (import.meta as any).env?.VITE_CONTACTS_SPREADSHEET_ID || "";
+const SPREADSHEET_SOURCE_ENV = (import.meta as any).env?.VITE_CONTACTS_SPREADSHEET_ID || "";
 
 export default function App() {
+  const [spreadsheetSource, setSpreadsheetSource] = useState(() => {
+    return SPREADSHEET_SOURCE_ENV || HARDCODED_SPREADSHEET_ID;
+  });
   const [selectedSpreadsheet, setSelectedSpreadsheet] = useState<SpreadsheetFile | null>(null);
   const [sheetTabName, setSheetTabName] = useState<string>('');
   
@@ -52,8 +62,8 @@ export default function App() {
         setAccessToken(token);
         
         // When user signs in, trigger column check if spreadsheet is linked
-        if (SPREADSHEET_SOURCE.trim()) {
-          const resolvedId = extractSpreadsheetId(SPREADSHEET_SOURCE) || SPREADSHEET_SOURCE.trim();
+        if (spreadsheetSource.trim()) {
+          const resolvedId = extractSpreadsheetId(spreadsheetSource) || spreadsheetSource.trim();
           if (contacts.length > 0) {
             const keys = Object.keys(contacts[0].raw || {});
             if (keys.length > 0) {
@@ -72,12 +82,12 @@ export default function App() {
         unsubscribe();
       }
     };
-  }, [contacts, sheetTabName]);
+  }, [contacts, sheetTabName, spreadsheetSource]);
 
-  // 2. On Mount: Resolve and load spreadsheet if provided
+  // 2. On Source Change: Resolve and load spreadsheet if provided
   useEffect(() => {
-    if (SPREADSHEET_SOURCE.trim()) {
-      const resolvedId = extractSpreadsheetId(SPREADSHEET_SOURCE) || SPREADSHEET_SOURCE.trim();
+    if (spreadsheetSource.trim()) {
+      const resolvedId = extractSpreadsheetId(spreadsheetSource) || spreadsheetSource.trim();
       
       // Load from local cache for instant visual render
       try {
@@ -99,8 +109,11 @@ export default function App() {
       }
 
       loadPublicSheet(resolvedId, "Connected Live Sheet");
+    } else {
+      setContacts([]);
+      setSelectedSpreadsheet(null);
     }
-  }, []);
+  }, [spreadsheetSource]);
 
   // 3. Helper to fetch live CSV and merge Firestore vote counts
   const loadPublicSheet = async (sheetId: string, nameFallback: string, customTab?: string) => {
@@ -298,10 +311,10 @@ export default function App() {
             <Database size={16} className="text-emerald-650 shrink-0" />
             <div className="overflow-hidden">
               <h1 className="text-xs font-bold text-slate-900 tracking-tight truncate">
-                {!SPREADSHEET_SOURCE ? 'Contacts Directory' : 'Service Contacts'}
+                {!spreadsheetSource ? 'Contacts Directory' : 'Service Contacts'}
               </h1>
               <p className="text-[9px] text-emerald-650 font-semibold font-mono uppercase tracking-wide">
-                {!SPREADSHEET_SOURCE
+                {!spreadsheetSource
                   ? 'Awaiting Connection'
                   : isLoadingContacts
                     ? 'Syncing...'
@@ -326,78 +339,18 @@ export default function App() {
         </div>
 
         {/* Dynamic Display depending on Spreadsheet Source existence */}
-        {!SPREADSHEET_SOURCE ? (
-          /* Case A: Spreadsheet ID is blank - Show beautiful, clear Environment Variable Setup Guidance */
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col justify-center bg-slate-200">
+        {!spreadsheetSource ? (
+          /* Case A: Spreadsheet ID is blank - Show prominent instructions to define the hardcoded constant */
+          <div className="flex-1 overflow-y-auto p-6 space-y-5 flex flex-col justify-center bg-slate-200">
             <div className="text-center space-y-2">
-              <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mx-auto shadow-xs">
+              <div className="w-12 h-12 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mx-auto shadow-xs">
                 <FileSpreadsheet size={24} />
               </div>
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">Connect your Google Sheet</h2>
+              <h2 className="text-base font-bold text-slate-800 tracking-tight">No Spreadsheet Connected</h2>
               <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-                Provide a Google Spreadsheet source to load, search, and view your contacts directory in real-time.
+                Please edit the <code className="bg-slate-300 px-1 py-0.5 rounded text-rose-700 font-mono font-bold text-[10px]">HARDCODED_SPREADSHEET_ID</code> constant in <code className="bg-slate-300 px-1 py-0.5 rounded text-rose-700 font-mono font-bold text-[10px]">src/App.tsx</code> to paste your Google Spreadsheet ID or URL.
               </p>
             </div>
-
-            {/* Instruction Steps cards */}
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-mono uppercase tracking-wider text-slate-450 select-none">
-                Setup Instructions
-              </h3>
-
-              {/* Step 1 */}
-              <div className="bg-white border border-slate-200/90 shadow-2xs p-3.5 rounded-xl space-y-1.5 flex gap-3 items-start">
-                <div className="w-5 h-5 rounded bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-600 shrink-0 font-mono mt-0.5">
-                  1
-                </div>
-                <div className="text-xs">
-                  <p className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Eye size={13} className="text-slate-455" />
-                    Share Google Sheet
-                  </p>
-                  <p className="text-slate-500 leading-normal mt-0.5">
-                    In your spreadsheet, click <strong className="text-slate-700 font-semibold">Share</strong>. Under General Access, change to <strong className="text-emerald-600 font-bold">Anyone with the link can view</strong>, then copy the link.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 2 */}
-              <div className="bg-white border border-slate-200/90 shadow-2xs p-3.5 rounded-xl space-y-1.5 flex gap-3 items-start">
-                <div className="w-5 h-5 rounded bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-600 shrink-0 font-mono mt-0.5">
-                  2
-                </div>
-                <div className="text-xs flex-1">
-                  <p className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Key size={13} className="text-slate-455" />
-                    Configure Environment
-                  </p>
-                  <p className="text-slate-500 leading-normal mt-0.5">
-                    Open the <strong className="text-slate-700 font-semibold">Settings</strong> menu in AI Studio and add a new custom Environment Variable:
-                  </p>
-                  
-                  {/* Environment variable code pill */}
-                  <div className="mt-2 flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono text-[10px] text-slate-700">
-                    <span className="truncate select-all text-emerald-600 font-bold">VITE_CONTACTS_SPREADSHEET_ID</span>
-                    <button 
-                      onClick={copyToClipboard}
-                      className="p-1 hover:bg-slate-100 rounded text-slate-450 hover:text-slate-700 transition-colors cursor-pointer"
-                      title="Copy variable name"
-                    >
-                      {copiedText ? <Check size={12} className="text-emerald-600" /> : <Clipboard size={12} />}
-                    </button>
-                  </div>
-                  
-                  <p className="text-slate-450 text-[10px] mt-1 leading-normal">
-                    Set its value to your copied spreadsheet link (or just the spreadsheet ID string).
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Note */}
-            <p className="text-[10px] text-slate-400 leading-relaxed text-center italic">
-              Changes reflect instantly in the app once compiled. Press the refresh button at the top to reload any additions.
-            </p>
           </div>
         ) : (
           /* Case B: Spreadsheet ID is configured - Load catalogue viewer */
